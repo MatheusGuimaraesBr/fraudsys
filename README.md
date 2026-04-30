@@ -1,6 +1,6 @@
 # FraudSys
 
-API REST para gestão de limites de transações PIX, desenvolvida em .NET 8 com AWS DynamoDB.
+Sistema de API REST para gestão de limites de transações PIX, desenvolvida em .NET 8 com AWS DynamoDB.
 
 ---
 
