@@ -29,8 +29,10 @@ public class LimiteContaController : ControllerBase
         }
     }
 
-    [HttpGet("{cpf}/{conta}")]
-    public async Task<IActionResult> Buscar(string cpf, string conta)
+[HttpGet("{cpf}/{conta}")]
+public async Task<IActionResult> Buscar(string cpf, string conta)
+{
+    try
     {
         var resultado = await _service.BuscarAsync(cpf, conta);
 
@@ -39,39 +41,52 @@ public class LimiteContaController : ControllerBase
 
         return Ok(resultado);
     }
-
-    [HttpPut("{cpf}/{conta}")]
-    public async Task<IActionResult> AtualizarLimite(
-        string cpf,
-        string conta,
-        [FromBody] AtualizarLimiteRequest request)
+    catch (Exception ex)
     {
-        try
-        {
-            await _service.AtualizarLimiteAsync(cpf, conta, request);
-            return Ok(new { mensagem = "Limite atualizado com sucesso." });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { erro = ex.Message });
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { erro = ex.Message });
-        }
+        return StatusCode(500, new { erro = ex.Message });
     }
+}
 
-    [HttpDelete("{cpf}/{conta}")]
-    public async Task<IActionResult> Remover(string cpf, string conta)
+[HttpPut("{cpf}/{conta}")]
+public async Task<IActionResult> AtualizarLimite(
+    string cpf,
+    string conta,
+    [FromBody] AtualizarLimiteRequest request)
+{
+    try
     {
-        try
-        {
-            await _service.RemoverAsync(cpf, conta);
-            return Ok(new { mensagem = "Registro removido com sucesso." });
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { erro = ex.Message });
-        }
+        await _service.AtualizarLimiteAsync(cpf, conta, request);
+        return Ok(new { mensagem = "Limite atualizado com sucesso." });
     }
+    catch (KeyNotFoundException ex)
+    {
+        return NotFound(new { erro = ex.Message });
+    }
+    catch (ArgumentException ex)
+    {
+        return BadRequest(new { erro = ex.Message });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { erro = ex.Message });
+    }
+}
+
+[HttpDelete("{cpf}/{conta}")]
+public async Task<IActionResult> Remover(string cpf, string conta)
+{
+    try
+    {
+        await _service.RemoverAsync(cpf, conta);
+        return Ok(new { mensagem = "Registro removido com sucesso." });
+    }
+    catch (KeyNotFoundException ex)
+    {
+        return NotFound(new { erro = ex.Message });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { erro = ex.Message });
+    }
+}
 }

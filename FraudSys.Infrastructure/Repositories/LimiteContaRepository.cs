@@ -32,31 +32,30 @@ public class LimiteContaRepository : ILimiteContaRepository
         await _dynamoDb.PutItemAsync(request);
     }
 
-    public async Task<LimiteConta?> BuscarAsync(string cpf, string conta)
+   public async Task<LimiteConta?> BuscarAsync(string cpf, string conta)
+{
+    var request = new GetItemRequest
     {
-        var request = new GetItemRequest
+        TableName = TableName,
+        Key = new Dictionary<string, AttributeValue>
         {
-            TableName = TableName,
-            Key = new Dictionary<string, AttributeValue>
-            {
-                { "cpf",   new AttributeValue { S = cpf } },
-                { "conta", new AttributeValue { S = conta } }
-            }
-        };
+            { "cpf",   new AttributeValue { S = cpf } },
+            { "conta", new AttributeValue { S = conta } }
+        }
+    };
 
-        var response = await _dynamoDb.GetItemAsync(request);
+    var response = await _dynamoDb.GetItemAsync(request);
 
-        // Se não encontrou, retorna null
-        if (!response.Item.Any())
-            return null;
+    if (response.Item == null || !response.Item.Any())
+        return null;
 
-        return new LimiteConta(
-            cpf:       response.Item["cpf"].S,
-            agencia:   response.Item["agencia"].S,
-            conta:     response.Item["conta"].S,
-            limitePix: decimal.Parse(response.Item["limitePix"].N)
-        );
-    }
+    return new LimiteConta(
+        cpf:       response.Item["cpf"].S,
+        agencia:   response.Item["agencia"].S,
+        conta:     response.Item["conta"].S,
+        limitePix: decimal.Parse(response.Item["limitePix"].N)
+    );
+}
 
     public async Task AtualizarLimiteAsync(string cpf, string conta, decimal novoLimite)
     {

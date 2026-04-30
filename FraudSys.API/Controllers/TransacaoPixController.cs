@@ -15,21 +15,25 @@ public class TransacaoPixController : ControllerBase
         _service = service;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> ProcessarTransacao([FromBody] TransacaoPixRequest request)
+[HttpPost]
+public async Task<IActionResult> ProcessarTransacao([FromBody] TransacaoPixRequest request)
+{
+    try
     {
-        try
-        {
-            var resultado = await _service.ProcessarTransacaoAsync(request);
+        var resultado = await _service.ProcessarTransacaoAsync(request);
 
-            if (!resultado.Aprovada)
-                return UnprocessableEntity(resultado);
+        if (!resultado.Aprovada)
+            return UnprocessableEntity(resultado);
 
-            return Ok(resultado);
-        }
-        catch (ArgumentException ex)
-        {
-            return BadRequest(new { erro = ex.Message });
-        }
+        return Ok(resultado);
     }
+    catch (ArgumentException ex)
+    {
+        return BadRequest(new { erro = ex.Message });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { erro = ex.Message });
+    }
+}
 }
