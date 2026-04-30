@@ -92,19 +92,46 @@ public class LimiteContaRepository : ILimiteContaRepository
         await _dynamoDb.DeleteItemAsync(request);
     }
 
-    public async Task<bool> ConsumirLimiteAsync(string cpf, string conta, decimal valor)
+public async Task<bool> ConsumirLimiteAsync(string cpf, string conta, decimal valor)
+{
+    var contaAtual = await BuscarAsync(cpf, conta);
+
+    if (contaAtual == null)
+        return false;
+
+    if (contaAtual.LimitePix < valor)
+        return false;
+
+    var novoLimite = contaAtual.LimitePix - valor;
+
+    try
     {
-        var contaAtual = await BuscarAsync(cpf, conta);
+        var request = new UpdateItemRequest
+        {
+            TableName = TableName,
+            Key = new Dictionary<string, AttributeValue>
+            {
+                { "cpf",   new AttributeValue { S = cpf } },
+                { "conta", new AttributeValue { S = conta } }
+            },
+            UpdateExpression = "SET limitePix = :novoLimite",
+            ConditionExpression = "limitePix = :limiteAtual",
 
-        if (contaAtual == null)
-            return false;
+            ExpressionAttributeValues = new Dictionary<string, AttributeValue>
+            {
+                { ":novoLimite",  new AttributeValue { N = novoLimite.ToString() } },
+                { ":limiteAtual", new AttributeValue { N = contaAtual.LimitePix.ToString() } }
+            }
+        };
 
-        if (contaAtual.LimitePix < valor)
-            return false;
-
-        var novoLimite = contaAtual.LimitePix - valor;
-        await AtualizarLimiteAsync(cpf, conta, novoLimite);
-
+        await _dynamoDb.UpdateItemAsync(request);
         return true;
     }
+    catch (ConditionalCheckFailedException)
+    {
+        // Outra requisição alterou o limite antes de nós
+        // Retorna false para que a transação seja negada e reprocessada
+        return false;
+    }
+}
 }
